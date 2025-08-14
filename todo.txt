@@ -1,0 +1,14 @@
+- Fix 128 1/4 sprites rendering top left??
+- make all 81 blocks render in grid
+  - demo pattern / animation?
+- create structure for game state
+- create all pieces
+- render single live piece
+- add new palette to highlight live piece
+- live piece movement
+- place live piece and update game state
+- collision detection between live piece and board
+- 3 live pieces
+  - cycle with L/R
+  - Show preview of queue on right side
+- Scoring system
