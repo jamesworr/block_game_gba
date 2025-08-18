@@ -5,6 +5,7 @@
 #include <string.h>
 #include <tonc.h>
 #include "block_sprite.h"
+#include "pieces.h"
 
 OBJ_ATTR obj_buffer[128];
 OBJ_AFFINE *obj_aff_buffer= (OBJ_AFFINE*)obj_buffer;
