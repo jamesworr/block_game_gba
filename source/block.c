@@ -20,7 +20,8 @@ OBJ_AFFINE *obj_aff_buffer= (OBJ_AFFINE*)obj_buffer;
 
 #define NUM_COLS 9
 #define NUM_ROWS 9
-#define MAX_BLOCKS 1 // FIXME
+#define MAX_BLOCKS 81 // FIXME
+#define BLOCK_GAP_WIDTH 0
 
 #define BLOCK_TILE_OFFSET 0
 
@@ -50,12 +51,54 @@ const SCR_ENTRY my_map[20][32] = {
     {WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID,WPID},
 };
 
+volatile u8 board_state[NUM_COLS][NUM_ROWS] = {
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+    {0,0,0,0,0,0,0,0,0},
+};
+
 void wait_any_key(void) {
     while(1) {
         vid_vsync();
         key_poll();
         if(key_hit(KEY_ANY)) {
             break;
+        }
+    }
+}
+
+void demo_animation(int frame) {
+    if ((frame & 0x0007) != 0x0007) {
+        return;
+    }
+    for (int i = 0; i < MAX_BLOCKS; i++) {
+        if (board_state[i/NUM_ROWS][i%NUM_COLS]) {
+            board_state[(i-1)/NUM_ROWS][(i-1)%NUM_COLS] = 1;
+            board_state[i/NUM_ROWS][i%NUM_COLS] = 0;
+            if (i == 0) {
+                board_state[NUM_ROWS-1][NUM_COLS-1] = 1;
+            } 
+        }
+    }
+}
+
+void render_blocks(void) {
+    OBJ_ATTR *block_obj;
+    for (int col = 0; col < NUM_COLS; col++) {
+        for (int row = 0; row < NUM_ROWS; row++) {
+            block_obj = &obj_buffer[(col*NUM_COLS)+row];
+            if (board_state[row][col]) {
+                block_obj->attr0 = block_obj->attr0 & 0xFCFF;
+            }
+            else {
+                block_obj->attr0 = block_obj->attr0 | ATTR0_HIDE;
+            }
         }
     }
 }
@@ -140,12 +183,18 @@ void sprite_loop() {
     for (int i = 0; i < MAX_BLOCKS; i++) {
         block_obj = &obj_buffer[i];
         obj_set_attr(block_obj,
-            ATTR0_SQUARE,
+            ATTR0_SQUARE | ATTR0_HIDE,
             ATTR1_SIZE_16x16,
             ATTR2_PALBANK(0) | BLOCK_TILE_OFFSET);
-        obj_set_pos(block_obj, 100, 100); // TODO fix XY per block location
+        obj_set_pos(block_obj, (i/NUM_COLS)*BLOCK_HEIGHT, (i%NUM_ROWS)*BLOCK_WIDTH); // TODO fix XY per block location
     }
 
+    // TODO remove demo
+    board_state[NUM_ROWS-1][NUM_COLS-1] = 1;
+    board_state[NUM_ROWS-3][NUM_COLS-3] = 1;
+    board_state[NUM_ROWS-5][NUM_COLS-5] = 1;
+
+    int frame_counter = 0;
     while(1) {
         vid_vsync();
         key_poll();
@@ -169,13 +218,18 @@ void sprite_loop() {
         //mr_env->attr2= ATTR2_BUILD(tid, pb, 0);
         //obj_set_pos(mr_env, x, y);
 
+        // TODO remove demo
+        demo_animation(frame_counter);
+
+        render_blocks();
         oam_copy(oam_mem, obj_buffer,  MAX_BLOCKS /* + other things??? TODO */);
+        frame_counter++;
     }
 }
 
 int main() {
     while(1) {
-        opening_sequence();
+        //opening_sequence();
 
         // Setup for tiled mode
         // Places the glyphs of a 4bpp Mr. Envelope
@@ -183,10 +237,10 @@ int main() {
         // TODO copy block
         memcpy32(&tile_mem[4][0], block_spriteTiles, block_spriteTilesLen / sizeof(u32));
         memcpy16(pal_obj_mem, block_spritePal, block_spritePalLen / sizeof(u16));
-
+        oam_init(obj_buffer, 128);
         REG_DISPCNT= DCNT_MODE0 | DCNT_BG0 | DCNT_OBJ | DCNT_OBJ_1D;
 
-        init_bg(); // FIXME create basic BG
+        //init_bg(); // FIXME create basic BG
         sprite_loop();
 
         // Waiting for new commands
