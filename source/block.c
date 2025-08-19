@@ -74,17 +74,20 @@ void wait_any_key(void) {
     }
 }
 
-void demo_animation(int frame) {
-    if ((frame & 0x0007) != 0x0007) {
-        return;
+void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
+    for (int i = 0; i < MAX_DIM; i++) {
+        for (int j = 0; j < MAX_DIM; j++) {
+            board_state[block_idx_x+i][block_idx_y+j] = board_state[block_idx_x+i][block_idx_y+j] + piece_library[piece_idx][i][j];
+        }
     }
-    for (int i = 0; i < MAX_BLOCKS; i++) {
-        if (board_state[i/NUM_ROWS][i%NUM_COLS]) {
-            board_state[(i-1)/NUM_ROWS][(i-1)%NUM_COLS] = 1;
-            board_state[i/NUM_ROWS][i%NUM_COLS] = 0;
-            if (i == 0) {
-                board_state[NUM_ROWS-1][NUM_COLS-1] = 1;
-            } 
+}
+
+void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
+    for (int i = 0; i < MAX_DIM; i++) {
+        for (int j = 0; j < MAX_DIM; j++) {
+            if (board_state[block_idx_x+i][block_idx_y+j] > 0) {
+                board_state[block_idx_x+i][block_idx_y+j] = board_state[block_idx_x+i][block_idx_y+j] - piece_library[piece_idx][i][j];
+            }
         }
     }
 }
@@ -101,6 +104,31 @@ void render_blocks(void) {
                 block_obj->attr0 = block_obj->attr0 | ATTR0_HIDE;
             }
         }
+    }
+}
+
+void demo_animation(void) {
+    u8 piece_idx = 0;
+    while(1) {
+        vid_vsync();
+        key_poll();
+        if (key_hit(KEY_SELECT)) {
+            break; // Break out of waiting loop and restart
+        }
+
+        remove_piece_from_board_state(piece_idx, 4, 4);
+
+        if (key_hit(KEY_RIGHT) && (piece_idx < NUM_PIECES-1)) {
+            piece_idx++;
+        }
+        if (key_hit(KEY_LEFT) && (piece_idx > 0)) {
+            piece_idx--;
+        }
+        
+        copy_piece_to_board_state(piece_idx, 4, 4);
+
+        render_blocks();
+        oam_copy(oam_mem, obj_buffer,  MAX_BLOCKS /* + other things??? TODO */);
     }
 }
 
@@ -191,9 +219,7 @@ void sprite_loop() {
     }
 
     // TODO remove demo
-    board_state[NUM_ROWS-1][NUM_COLS-1] = 1;
-    board_state[NUM_ROWS-3][NUM_COLS-3] = 1;
-    board_state[NUM_ROWS-5][NUM_COLS-5] = 1;
+    demo_animation();
 
     int frame_counter = 0;
     while(1) {
@@ -219,8 +245,6 @@ void sprite_loop() {
         //mr_env->attr2= ATTR2_BUILD(tid, pb, 0);
         //obj_set_pos(mr_env, x, y);
 
-        // TODO remove demo
-        demo_animation(frame_counter);
 
         render_blocks();
         oam_copy(oam_mem, obj_buffer,  MAX_BLOCKS /* + other things??? TODO */);
