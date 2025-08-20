@@ -1,6 +1,5 @@
 TODO
 - live piece movement
-- add new palette to highlight live piece
 - place live piece and update game state
 - collision detection between live piece and board
 - refactor game pieces to always have block in top left or bottom right
