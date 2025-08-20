@@ -109,6 +109,8 @@ void render_blocks(void) {
 
 void demo_animation(void) {
     u8 piece_idx = 0;
+    u8 pal_bank  = 0;
+    OBJ_ATTR *block_obj;
     while(1) {
         vid_vsync();
         key_poll();
@@ -123,6 +125,16 @@ void demo_animation(void) {
         }
         if (key_hit(KEY_LEFT) && (piece_idx > 0)) {
             piece_idx--;
+        }
+        if (key_hit(KEY_UP)) {
+            pal_bank++;
+            for (int i = 0; i < MAX_BLOCKS; i++) {
+                block_obj = &obj_buffer[i];
+                block_obj->attr2= ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
+            }
+        }
+        if (key_hit(KEY_DOWN)) {
+            pal_bank--;
         }
         
         copy_piece_to_board_state(piece_idx, 4, 4);
