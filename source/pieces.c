@@ -6,7 +6,8 @@
 #define NUM_PIECES 40
 #define MAX_DIM 5
 
-const unsigned char piece_library[NUM_PIECES][MAX_DIM][MAX_DIM] = {
+typedef unsigned char pl_t[MAX_DIM][MAX_DIM];
+const pl_t piece_library[NUM_PIECES] = {
     {{2,0,0,0,0},
      {2,0,0,0,0},
      {2,0,0,0,0},

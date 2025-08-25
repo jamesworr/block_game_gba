@@ -64,6 +64,9 @@ volatile u8 board_state[NUM_COLS][NUM_ROWS] = {
     {0,0,0,0,0,0,0,0,0},
 };
 
+// FIXME dummy for now
+const pl_t* live_piece = &(piece_library[0]);
+
 void wait_any_key(void) {
     while(1) {
         vid_vsync();
@@ -110,7 +113,6 @@ void render_blocks(void) {
 void demo_animation(void) {
     u8 piece_idx = 0;
     u8 pal_bank  = 0;
-    OBJ_ATTR *block_obj;
     while(1) {
         vid_vsync();
         key_poll();
@@ -129,12 +131,14 @@ void demo_animation(void) {
         if (key_hit(KEY_UP)) {
             pal_bank++;
             for (int i = 0; i < MAX_BLOCKS; i++) {
-                block_obj = &obj_buffer[i];
-                block_obj->attr2= ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
+                obj_buffer[i].attr2 = ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
             }
         }
         if (key_hit(KEY_DOWN)) {
             pal_bank--;
+            for (int i = 0; i < MAX_BLOCKS; i++) {
+                obj_buffer[i].attr2 = ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
+            }
         }
         
         copy_piece_to_board_state(piece_idx, 4, 4);

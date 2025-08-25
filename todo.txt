@@ -2,11 +2,14 @@ TODO
 - live piece movement
 - place live piece and update game state
 - collision detection between live piece and board
+- enum for game state?
+- struct for live piece info
 - refactor game pieces to always have block in top left or bottom right
 - 3 live pieces
   - cycle with L/R
   - Show preview of queue on right side
 - Scoring system
+- Optimize copy_piece_to_board_state() and remove_piece_from_board_state() to not check full grid
 
 Bug List
 - Gap between the blocks
