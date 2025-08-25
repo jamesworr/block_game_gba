@@ -1,5 +1,6 @@
 TODO
-- live piece movement
+- add max XY dimensions to piece library
+- add key/index for top+left or bottom+right to piece library
 - place live piece and update game state
 - collision detection between live piece and board
 - enum for game state?
@@ -13,4 +14,5 @@ TODO
 
 Bug List
 - Gap between the blocks
+- Live piece movement limits (needs to be piece aware)
 

@@ -65,7 +65,11 @@ volatile u8 board_state[NUM_COLS][NUM_ROWS] = {
 };
 
 // FIXME dummy for now
+// TODO make it a struct to handle multiple pieces
 const pl_t* live_piece = &(piece_library[0]);
+volatile u8 live_piece_idx = 0;
+volatile u8 live_piece_x   = 0;
+volatile u8 live_piece_y   = 0;
 
 void wait_any_key(void) {
     while(1) {
@@ -80,7 +84,7 @@ void wait_any_key(void) {
 void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
-            board_state[block_idx_x+i][block_idx_y+j] = board_state[block_idx_x+i][block_idx_y+j] + piece_library[piece_idx][i][j];
+            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx][i][j];
         }
     }
 }
@@ -88,8 +92,8 @@ void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
 void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
-            if (board_state[block_idx_x+i][block_idx_y+j] > 0) {
-                board_state[block_idx_x+i][block_idx_y+j] = board_state[block_idx_x+i][block_idx_y+j] - piece_library[piece_idx][i][j];
+            if (board_state[block_idx_y+i][block_idx_x+j] > 0) {
+                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx][i][j];
             }
         }
     }
@@ -235,7 +239,10 @@ void sprite_loop() {
     }
 
     // TODO remove demo
-    demo_animation();
+    //demo_animation();
+    
+    // Copy initial piece to board
+    copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
 
     int frame_counter = 0;
     while(1) {
@@ -244,16 +251,37 @@ void sprite_loop() {
         if (key_hit(KEY_SELECT)) {
             break; // Break out of waiting loop and restart
         }
+        // Game Loop
+        // move live piece or swap live piece
+        // check collisons
+        // Can place?
+        // Does legal placement clear any blocks? (vertical, horizontal, square)
+
+        // Check if we need to update
+        // FIXME
+        //if (key_hit(KEY_UP | KEY_RIGHT | KEY_LEFT | KEY_RIGHT)) {
 
         // TODO move live piece
-        // move left/right
-        //x += 2*key_tri_horz();
+        remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y);
+        
+        // FIXME redo the bounds checking to account for different piece shapes
+        if (key_hit(KEY_UP) && (live_piece_y > 0)) {
+            live_piece_y--;
+        }
+        if (key_hit(KEY_DOWN) && (live_piece_y < NUM_ROWS)) {
+            live_piece_y++;
+        }
+        if (key_hit(KEY_LEFT) && (live_piece_x > 0)) {
+            live_piece_x--;
+        }
+        if (key_hit(KEY_RIGHT) && (live_piece_y < NUM_ROWS)) {
+            live_piece_x++;
+        }
 
-        // move up/down
-        //y += 2*key_tri_vert();
-
-        // TODO update colors of live piece placement
-        // make collision 1 color and valid placement another
+        copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
+            // TODO update colors of live piece placement
+            // make collision 1 color and valid placement another
+        //}
 
         // TODO check for "place" command
 
