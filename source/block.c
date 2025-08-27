@@ -66,7 +66,7 @@ volatile u8 board_state[NUM_COLS][NUM_ROWS] = {
 
 // FIXME dummy for now
 // TODO make it a struct to handle multiple pieces
-const pl_t* live_piece = &(piece_library[0]);
+//const piece_map_t* live_piece = &(piece_library[0]);
 volatile u8 live_piece_idx = 0;
 volatile u8 live_piece_x   = 0;
 volatile u8 live_piece_y   = 0;
@@ -84,7 +84,7 @@ void wait_any_key(void) {
 void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
-            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx][i][j];
+            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx].map[i][j];
         }
     }
 }
@@ -93,7 +93,7 @@ void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y)
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
             if (board_state[block_idx_y+i][block_idx_x+j] > 0) {
-                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx][i][j];
+                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx].map[i][j];
             }
         }
     }

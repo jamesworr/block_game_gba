@@ -1,11 +1,9 @@
 TODO
-- add max XY dimensions to piece library
-- add key/index for top+left or bottom+right to piece library
+- use max XY piece dimensions and topl/botr key in add/remove functions
+- remove repeated shapes and apply random rotation??
 - place live piece and update game state
 - collision detection between live piece and board
 - enum for game state?
-- struct for live piece info
-- refactor game pieces to always have block in top left or bottom right
 - 3 live pieces
   - cycle with L/R
   - Show preview of queue on right side
