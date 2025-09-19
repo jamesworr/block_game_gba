@@ -81,6 +81,7 @@ void wait_any_key(void) {
     }
 }
 
+// TODO optimize to only run live piece shape, not n^2
 void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
@@ -89,6 +90,7 @@ void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     }
 }
 
+// TODO optimize to only run live piece shape, not n^2
 void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
@@ -152,44 +154,6 @@ void demo_animation(void) {
     }
 }
 
-void opening_sequence(void) {
-//    // Setup bmp background
-//    memcpy32(vid_mem, me_fullBitmap, me_fullBitmapLen / sizeof(u32));
-//    memcpy16(pal_bg_mem, me_fullPal, me_fullPalLen / sizeof(u16));
-//
-//    REG_DISPCNT= DCNT_MODE4 | DCNT_BG2;
-//
-//    // Text screen 1
-//    tte_init_bmp_default(4);
-//    tte_write("#{P:72,110}");
-//    tte_write("Happy birthday, Avery!");
-//    tte_write("#{P:72,140}");
-//    tte_write("Press any key to continue");
-//    vid_vsync();
-//    wait_any_key();
-//    vid_vsync();
-//    // Clean up
-//    tte_write("#{P:72,110}");
-//    tte_erase_line();
-//    vid_vsync();
-//
-//    // Text screen 2
-//    vid_vsync();
-//    tte_write("#{P:5,110}");
-//    tte_write("We all know you can't mail things to other continents");
-//    tte_write("#{P:72,120}");
-//    tte_write("so this year I had to go digital!");
-//    vid_vsync();
-//    wait_any_key();
-//
-//    // Clean up
-//    tte_write("#{P:5,110}");
-//    tte_erase_line();
-//    tte_write("#{P:72,120}");
-//    tte_erase_line();
-//    vid_vsync();
-}
-
 void init_bg() {
     int ii, jj;
 
@@ -245,6 +209,7 @@ void sprite_loop() {
     copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
 
     int frame_counter = 0;
+    u8 collision = 0;
     while(1) {
         vid_vsync();
         key_poll();
@@ -257,24 +222,32 @@ void sprite_loop() {
         // Can place?
         // Does legal placement clear any blocks? (vertical, horizontal, square)
 
-        // Check if we need to update
-        // FIXME
-        //if (key_hit(KEY_UP | KEY_RIGHT | KEY_LEFT | KEY_RIGHT)) {
-
-        // TODO move live piece
         remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y);
+
+        // Check collision
+
+        // Check for "place" command
+        // Double copy on placement to leave blocks in the game state
+        // Check for no collision
+        // Generate new live piece
+        if ((key_hit(KEY_A)) && (collision == 0)) {
+            copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
+            live_piece_idx = qran_range(0, NUM_PIECES-1);
+            live_piece_x   = 0;
+            live_piece_y   = 0;
+        }
         
         // FIXME redo the bounds checking to account for different piece shapes
         if (key_hit(KEY_UP) && (live_piece_y > 0)) {
             live_piece_y--;
         }
-        if (key_hit(KEY_DOWN) && (live_piece_y < NUM_ROWS)) {
+        if (key_hit(KEY_DOWN) && (live_piece_y < (NUM_ROWS - piece_library[live_piece_idx].y_len))) {
             live_piece_y++;
         }
         if (key_hit(KEY_LEFT) && (live_piece_x > 0)) {
             live_piece_x--;
         }
-        if (key_hit(KEY_RIGHT) && (live_piece_y < NUM_ROWS)) {
+        if (key_hit(KEY_RIGHT) && (live_piece_x < (NUM_ROWS - piece_library[live_piece_idx].x_len))) {
             live_piece_x++;
         }
 
@@ -283,7 +256,6 @@ void sprite_loop() {
             // make collision 1 color and valid placement another
         //}
 
-        // TODO check for "place" command
 
         // FIXME update all touched blocks
         //mr_env->attr2= ATTR2_BUILD(tid, pb, 0);
