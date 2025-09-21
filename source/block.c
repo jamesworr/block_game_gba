@@ -82,20 +82,20 @@ void wait_any_key(void) {
 }
 
 // TODO optimize to only run live piece shape, not n^2
-void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
+void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
-            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx].map[i][j];
+            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx].map[i][j] + pal_offset;
         }
     }
 }
 
 // TODO optimize to only run live piece shape, not n^2
-void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
+void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
             if (board_state[block_idx_y+i][block_idx_x+j] > 0) {
-                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx].map[i][j];
+                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx].map[i][j] + pal_offset;
             }
         }
     }
@@ -107,9 +107,23 @@ void render_blocks(void) {
         for (int row = 0; row < NUM_ROWS; row++) {
             block_obj = &obj_buffer[(col*NUM_COLS)+row];
             if (board_state[row][col]) {
+                // Set sprite visibility
                 block_obj->attr0 = block_obj->attr0 & 0xFCFF;
+
+                // Set sprite palette
+                u8 pal_bank;
+                switch (board_state[row][col]) {
+                    case 2:
+                        pal_bank = 1;
+                        break;
+                    default:
+                        pal_bank = 3;
+                        break;
+                }
+                block_obj->attr2 = ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
             }
             else {
+                // Set sprite visibility
                 block_obj->attr0 = block_obj->attr0 | ATTR0_HIDE;
             }
         }
@@ -126,7 +140,7 @@ void demo_animation(void) {
             break; // Break out of waiting loop and restart
         }
 
-        remove_piece_from_board_state(piece_idx, 4, 4);
+        remove_piece_from_board_state(piece_idx, 4, 4, 0);
 
         if (key_hit(KEY_RIGHT) && (piece_idx < NUM_PIECES-1)) {
             piece_idx++;
@@ -147,7 +161,7 @@ void demo_animation(void) {
             }
         }
         
-        copy_piece_to_board_state(piece_idx, 4, 4);
+        copy_piece_to_board_state(piece_idx, 4, 4, 0);
 
         render_blocks();
         oam_copy(oam_mem, obj_buffer,  MAX_BLOCKS /* + other things??? TODO */);
@@ -191,7 +205,6 @@ void init_bg() {
 }
 
 void sprite_loop() {
-    // TODO init 81 block sprites
     OBJ_ATTR *block_obj;
     for (int i = 0; i < MAX_BLOCKS; i++) {
         block_obj = &obj_buffer[i];
@@ -199,14 +212,14 @@ void sprite_loop() {
             ATTR0_SQUARE | ATTR0_HIDE,
             ATTR1_SIZE_16x16,
             ATTR2_PALBANK(0) | BLOCK_TILE_OFFSET);
-        obj_set_pos(block_obj, (i/NUM_COLS)*BLOCK_HEIGHT, (i%NUM_ROWS)*BLOCK_WIDTH); // TODO fix XY per block location
+        obj_set_pos(block_obj, (i/NUM_COLS)*BLOCK_HEIGHT, (i%NUM_ROWS)*BLOCK_WIDTH);
     }
 
     // TODO remove demo
     //demo_animation();
     
     // Copy initial piece to board
-    copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
+    copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
 
     int frame_counter = 0;
     u8 collision = 0;
@@ -222,7 +235,6 @@ void sprite_loop() {
         // Can place?
         // Does legal placement clear any blocks? (vertical, horizontal, square)
 
-        remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y);
 
         // Check collision
 
@@ -231,10 +243,12 @@ void sprite_loop() {
         // Check for no collision
         // Generate new live piece
         if ((key_hit(KEY_A)) && (collision == 0)) {
-            copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
             live_piece_idx = qran_range(0, NUM_PIECES-1);
             live_piece_x   = 0;
             live_piece_y   = 0;
+        }
+        else {
+            remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
         }
         
         // FIXME redo the bounds checking to account for different piece shapes
@@ -251,7 +265,7 @@ void sprite_loop() {
             live_piece_x++;
         }
 
-        copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y);
+        copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
             // TODO update colors of live piece placement
             // make collision 1 color and valid placement another
         //}

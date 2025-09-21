@@ -1,7 +1,7 @@
 TODO
 - use max XY piece dimensions and topl/botr key in add/remove functions
 - remove repeated shapes and apply random rotation??
-- place live piece and update game state
+- color entire live piece during collision
 - collision detection between live piece and board
 - enum for game state?
 - 3 live pieces
@@ -12,5 +12,4 @@ TODO
 
 Bug List
 - Gap between the blocks
-- Live piece movement limits (needs to be piece aware)
 
