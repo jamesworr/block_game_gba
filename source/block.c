@@ -82,12 +82,18 @@ void wait_any_key(void) {
 }
 
 // TODO optimize to only run live piece shape, not n^2
-void copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
+// returns collision state
+u8 copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
+    volatile u8 collision_found = 0;
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
-            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + piece_library[piece_idx].map[i][j] + pal_offset;
+            board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + (piece_library[piece_idx].map[i][j] << pal_offset);
+            if (board_state[block_idx_y+i][block_idx_x+j] > 2) {
+                collision_found = 1;
+            }
         }
     }
+    return collision_found;
 }
 
 // TODO optimize to only run live piece shape, not n^2
@@ -95,7 +101,7 @@ void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y,
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < MAX_DIM; j++) {
             if (board_state[block_idx_y+i][block_idx_x+j] > 0) {
-                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - piece_library[piece_idx].map[i][j] + pal_offset;
+                board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - (piece_library[piece_idx].map[i][j] << pal_offset);
             }
         }
     }
@@ -221,8 +227,8 @@ void sprite_loop() {
     // Copy initial piece to board
     copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
 
-    int frame_counter = 0;
-    u8 collision = 0;
+    volatile int frame_counter = 0;
+    volatile u8 collision = 0;
     while(1) {
         vid_vsync();
         key_poll();
@@ -265,10 +271,9 @@ void sprite_loop() {
             live_piece_x++;
         }
 
-        copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
-            // TODO update colors of live piece placement
-            // make collision 1 color and valid placement another
-        //}
+        collision = copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
+        // TODO update colors of live piece placement
+        // make collision 1 color and valid placement another
 
 
         // FIXME update all touched blocks
