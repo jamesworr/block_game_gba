@@ -107,6 +107,47 @@ void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y,
     }
 }
 
+// TODO optimize to only run live piece shape, not n^2
+// Checks for vertical 9, horizontal 9, or square 9
+// Check east west for each Y in the shape
+// Check north south for each X in the shape
+// returns points scored
+u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
+    u8 valid_structure = 1;
+    // East West for each Y in live piece
+    for (int i = 0; i < MAX_DIM; i++) {
+        for (int j = 0; j < NUM_ROWS; j++) {
+            if (board_state[block_idx_y+i][block_idx_x+j] == 0) {
+                valid_structure = 0;
+                break;
+            }
+        }
+        if (valid_structure == 1) {
+            for (int j = 0; j < NUM_ROWS; j++) {
+                board_state[block_idx_y+i][block_idx_x+j] = 10;
+            }
+        }
+        valid_structure = 1;
+    }
+    valid_structure = 1;
+    // North South for each X in live piece
+    for (int i = 0; i < MAX_DIM; i++) {
+        for (int j = 0; j < NUM_COLS; j++) {
+            if (board_state[block_idx_y+j][block_idx_x+i] == 0) {
+                valid_structure = 0;
+                break;
+            }
+        }
+        if (valid_structure == 1) {
+            for (int j = 0; j < NUM_COLS; j++) {
+                board_state[block_idx_y+j][block_idx_x+i] = 10;
+            }
+        }
+        valid_structure = 1;
+    }
+    return 0;
+}
+
 void render_blocks(void) {
     OBJ_ATTR *block_obj;
     for (int col = 0; col < NUM_COLS; col++) {
@@ -119,11 +160,14 @@ void render_blocks(void) {
                 // Set sprite palette
                 u8 pal_bank;
                 switch (board_state[row][col]) {
-                    case 2:
-                        pal_bank = 1;
+                    case 10:
+                        pal_bank = 2;
+                        break;
+                    case 4:
+                        pal_bank = 3;
                         break;
                     default:
-                        pal_bank = 3;
+                        pal_bank = 1;
                         break;
                 }
                 block_obj->attr2 = ATTR2_BUILD(BLOCK_TILE_OFFSET, pal_bank, 0);
@@ -252,6 +296,9 @@ void sprite_loop() {
             live_piece_idx = qran_range(0, NUM_PIECES-1);
             live_piece_x   = 0;
             live_piece_y   = 0;
+
+            // TODO check for cleared blocks
+            find_complete_block_structure(live_piece_idx, live_piece_x, live_piece_y);
         }
         else {
             remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
@@ -274,6 +321,9 @@ void sprite_loop() {
         collision = copy_piece_to_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
         // TODO update colors of live piece placement
         // make collision 1 color and valid placement another
+        // FIXME prob need to handle color indpenedant of directly from the block state
+        // having trouble coloring all live blocks this way
+        // problem is we can't just subtract after coloring all live pieces together
 
 
         // FIXME update all touched blocks
