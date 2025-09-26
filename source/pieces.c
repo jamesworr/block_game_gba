@@ -308,7 +308,7 @@ const piece_struct piece_library[NUM_PIECES] = {
     {
      2,
      2,
-     0,
+     1,
      {{0,0,0,0,0},
       {0,0,0,0,0},
       {0,0,0,0,0},

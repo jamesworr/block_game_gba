@@ -81,12 +81,12 @@ void wait_any_key(void) {
     }
 }
 
-// TODO optimize to only run live piece shape, not n^2
+// TODO DFS on piece map to only touch live piece
 // returns collision state
 u8 copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
     volatile u8 collision_found = 0;
-    for (int i = 0; i < MAX_DIM; i++) {
-        for (int j = 0; j < MAX_DIM; j++) {
+    for (int i = 0; i < piece_library[piece_idx].y_len; i++) {
+        for (int j = 0; j < piece_library[piece_idx].x_len; j++) {
             board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] + (piece_library[piece_idx].map[i][j] << pal_offset);
             if (board_state[block_idx_y+i][block_idx_x+j] > 2) {
                 collision_found = 1;
@@ -96,10 +96,10 @@ u8 copy_piece_to_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pa
     return collision_found;
 }
 
-// TODO optimize to only run live piece shape, not n^2
+// TODO DFS on piece map to only touch live piece
 void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y, u8 pal_offset) {
-    for (int i = 0; i < MAX_DIM; i++) {
-        for (int j = 0; j < MAX_DIM; j++) {
+    for (int i = 0; i < piece_library[piece_idx].y_len; i++) {
+        for (int j = 0; j < piece_library[piece_idx].x_len; j++) {
             if (board_state[block_idx_y+i][block_idx_x+j] > 0) {
                 board_state[block_idx_y+i][block_idx_x+j] = board_state[block_idx_y+i][block_idx_x+j] - (piece_library[piece_idx].map[i][j] << pal_offset);
             }
@@ -124,7 +124,8 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
         }
         if (valid_structure == 1) {
             for (int j = 0; j < NUM_ROWS; j++) {
-                board_state[block_idx_y+i][block_idx_x+j] = 10;
+                //board_state[block_idx_y+i][block_idx_x+j] = 10;
+                board_state[block_idx_y+i][block_idx_x+j] = 0;
             }
         }
         valid_structure = 1;
@@ -140,7 +141,8 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
         }
         if (valid_structure == 1) {
             for (int j = 0; j < NUM_COLS; j++) {
-                board_state[block_idx_y+j][block_idx_x+i] = 10;
+                //board_state[block_idx_y+j][block_idx_x+i] = 10;
+                board_state[block_idx_y+j][block_idx_x+i] = 0;
             }
         }
         valid_structure = 1;
@@ -294,6 +296,12 @@ void sprite_loop() {
         // Generate new live piece
         if ((key_hit(KEY_A)) && (collision == 0)) {
             live_piece_idx = qran_range(0, NUM_PIECES-1);
+
+            // FIXME just temporary until I implement botr
+            while (piece_library[live_piece_idx].topl_botr) {
+                live_piece_idx = qran_range(0, NUM_PIECES-1);
+            }
+
             live_piece_x   = 0;
             live_piece_y   = 0;
 

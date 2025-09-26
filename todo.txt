@@ -3,6 +3,7 @@ TODO
     - Need to separate color from game board state
     - Hard to remove a live piece, non-collision
 - enum for game state?
+- animate cleared pieces green for a few frames.  Maybe flash alternating colors???
 - use max XY piece dimensions and topl/botr key in add/remove functions
 - remove repeated shapes and apply random rotation??
 - 3 live pieces
@@ -12,6 +13,5 @@ TODO
 - Optimize copy_piece_to_board_state() and remove_piece_from_board_state() to not check full grid
 
 Bug List
-- Some locks not placing near edge
 - Gap between the blocks
 
