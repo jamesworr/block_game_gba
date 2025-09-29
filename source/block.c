@@ -117,7 +117,7 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     // East West for each Y in live piece
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < NUM_ROWS; j++) {
-            if (board_state[block_idx_y+i][block_idx_x+j] == 0) {
+            if (board_state[block_idx_y+i][j] == 0) {
                 valid_structure = 0;
                 break;
             }
@@ -125,7 +125,7 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
         if (valid_structure == 1) {
             for (int j = 0; j < NUM_ROWS; j++) {
                 //board_state[block_idx_y+i][block_idx_x+j] = 10;
-                board_state[block_idx_y+i][block_idx_x+j] = 0;
+                board_state[block_idx_y+i][j] = 0;
             }
         }
         valid_structure = 1;
@@ -134,7 +134,7 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     // North South for each X in live piece
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < NUM_COLS; j++) {
-            if (board_state[block_idx_y+j][block_idx_x+i] == 0) {
+            if (board_state[j][block_idx_x+i] == 0) {
                 valid_structure = 0;
                 break;
             }
@@ -142,7 +142,7 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
         if (valid_structure == 1) {
             for (int j = 0; j < NUM_COLS; j++) {
                 //board_state[block_idx_y+j][block_idx_x+i] = 10;
-                board_state[block_idx_y+j][block_idx_x+i] = 0;
+                board_state[j][block_idx_x+i] = 0;
             }
         }
         valid_structure = 1;
@@ -302,11 +302,11 @@ void sprite_loop() {
                 live_piece_idx = qran_range(0, NUM_PIECES-1);
             }
 
-            live_piece_x   = 0;
-            live_piece_y   = 0;
-
             // TODO check for cleared blocks
             find_complete_block_structure(live_piece_idx, live_piece_x, live_piece_y);
+
+            live_piece_x   = 0;
+            live_piece_y   = 0;
         }
         else {
             remove_piece_from_board_state(live_piece_idx, live_piece_x, live_piece_y, 0);
