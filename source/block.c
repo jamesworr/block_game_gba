@@ -109,7 +109,6 @@ void remove_piece_from_board_state(u8 piece_idx, u8 block_idx_x, u8 block_idx_y,
 
 u8 square_check(u8 x, u8 y) {
     // Find which squares the live piece touches
-    // TODO handle multiple squares cleared at the same time
     // could theoretically be 4 ):
     // maybe check the topl and if that clears then check the other 3?
     // TODO handle botr
@@ -117,21 +116,8 @@ u8 square_check(u8 x, u8 y) {
     volatile u8 valid_structure = 1;
 
     // Find the corner of the square to check
-    volatile u8 x_square;
-    volatile u8 y_square;
-
-    if (x > 8) {
-        x_square = 6;
-    }
-    else {
-        x_square = 3 * (x / 3);
-    }
-    if (y > 8) {
-        y_square = 6;
-    }
-    else {
-        y_square = 3 * (y / 3);
-    }
+    volatile u8 x_square = (x > 8) ? 6 : (3 * (x / 3));
+    volatile u8 y_square = (y > 8) ? 6 : (3 * (y / 3));
 
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -146,21 +132,8 @@ u8 square_check(u8 x, u8 y) {
 
 void square_clear(u8 x, u8 y) {
     // Find the corner of the square to check
-    volatile u8 x_square;
-    volatile u8 y_square;
-
-    if (x > 8) {
-        x_square = 6;
-    }
-    else {
-        x_square = 3 * (x / 3);
-    }
-    if (y > 8) {
-        y_square = 6;
-    }
-    else {
-        y_square = 3 * (y / 3);
-    }
+    volatile u8 x_square = (x > 8) ? 6 : (3 * (x / 3));
+    volatile u8 y_square = (y > 8) ? 6 : (3 * (y / 3));
 
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -210,22 +183,7 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
         valid_structure = 1;
     }
 
-    // Square
-    //valid_structure = square_check(block_idx_x, block_idx_y);
-    //if (valid_structure == 1) {
-    //    square_clear(block_idx_x, block_idx_y);
-    //}
-
-
-
-
     volatile u8 squares_state = 0;
-
-    //squares_state  =  square_check(block_idx_x, block_idx_y);
-    //squares_state |= (square_check(block_idx_x + piece_library[piece_idx].x_len, block_idx_y) << 1);
-    //squares_state |= (square_check(block_idx_x, block_idx_y + piece_library[piece_idx].y_len) << 2);
-    //squares_state |= (square_check(block_idx_x + piece_library[piece_idx].x_len, block_idx_y + piece_library[piece_idx].y_len) << 3);
-    
 
     squares_state |= square_check(block_idx_x + piece_library[piece_idx].x_len, block_idx_y + piece_library[piece_idx].y_len);
     squares_state <<= 1;
