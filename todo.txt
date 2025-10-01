@@ -1,5 +1,4 @@
 TODO
-- detect multiple horizontal/vertical clears
 - animate cleared pieces green for a few frames.  Maybe flash alternating colors???
 - color entire live piece during collision
     - Need to separate color from game board state
