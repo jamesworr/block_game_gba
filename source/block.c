@@ -149,6 +149,8 @@ void square_clear(u8 x, u8 y) {
 // returns points scored
 u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     u8 valid_structure = 1;
+    u8 total_clears = 0; // TODO use me
+
     // East West for each Y in live piece
     for (int i = 0; i < MAX_DIM; i++) {
         for (int j = 0; j < NUM_ROWS; j++) {
@@ -158,10 +160,8 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
             }
         }
         if (valid_structure == 1) {
-            for (int j = 0; j < NUM_ROWS; j++) {
-                //board_state[block_idx_y+i][block_idx_x+j] = 10;
-                board_state[block_idx_y+i][j] = 0;
-            }
+            // Tag row for removal
+            board_state[block_idx_y+i][0] = 20;
         }
         valid_structure = 1;
     }
@@ -175,16 +175,15 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
             }
         }
         if (valid_structure == 1) {
-            for (int j = 0; j < NUM_COLS; j++) {
-                //board_state[block_idx_y+j][block_idx_x+i] = 10;
-                board_state[j][block_idx_x+i] = 0;
-            }
+            // Have to create different tag in top left corner where you can have both
+            // horizontal and vertical clears starting from the same block
+            board_state[0][block_idx_x+i] = (board_state[0][block_idx_x+i] == 20)? 22:21;
         }
         valid_structure = 1;
     }
 
+    // Square detect
     volatile u8 squares_state = 0;
-
     squares_state |= square_check(block_idx_x + piece_library[piece_idx].x_len, block_idx_y + piece_library[piece_idx].y_len);
     squares_state <<= 1;
     squares_state |= square_check(block_idx_x, block_idx_y + piece_library[piece_idx].y_len);
@@ -193,6 +192,33 @@ u8 find_complete_block_structure(u8 piece_idx, u8 block_idx_x, u8 block_idx_y) {
     squares_state <<= 1;
     squares_state |=  square_check(block_idx_x, block_idx_y);
 
+    // Vertical removal
+    for (int i = 0; i < NUM_COLS; i++) {
+        if (board_state[0][i] == 21) { // FIXME handle collision
+            for (int j = 0; j < NUM_ROWS; j++) {
+                board_state[j][i] = 0;
+            }
+        }
+        // Both horizontal and vertical
+        else if (board_state[0][i] == 22) {
+            for (int j = 0; j < NUM_ROWS; j++) {
+                board_state[j][i] = 0;
+            }
+            board_state[0][i] = 20; // put tag back for horizontal
+        }
+    }
+    
+    // Horizontal removal
+    for (int i = 0; i < NUM_ROWS; i++) {
+        if (board_state[i][0] == 20) {
+            for (int j = 0; j < NUM_COLS; j++) {
+                board_state[i][j] = 0;
+            }
+        }
+    }
+
+
+    // Square removal
     if (squares_state & 0x01) {
         square_clear(block_idx_x, block_idx_y);
     }
