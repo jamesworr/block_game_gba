@@ -13,8 +13,8 @@ OBJ_AFFINE *obj_aff_buffer= (OBJ_AFFINE*)obj_buffer;
 #define CBB_0  0
 #define SBB_0 28
 
-#define FPID 6
-#define WPID 7
+#define FPID 0
+#define WPID 1
 
 #define BLOCK_WIDTH  16
 #define BLOCK_HEIGHT 16
@@ -313,26 +313,60 @@ void init_bg() {
     int ii, jj;
 
     // initialize a background
-    REG_BG0CNT= BG_CBB(CBB_0) | BG_SBB(SBB_0) | BG_REG_64x64;
-    REG_BG0HOFS= 0;
-    REG_BG0VOFS= 0;
+    REG_BG0CNT = BG_CBB(CBB_0) | BG_SBB(SBB_0) | BG_REG_32x32;
+    REG_BG0HOFS = 0;
+    REG_BG0VOFS = 0;
 
     // create the tiles: basic tile and a cross FIXME understand and edit
-    const TILE tiles[2]=
+    const TILE tiles[4]=
     {
-        {{0x11111111, 0x01111111, 0x01111111, 0x01111111,
-          0x01111111, 0x01111111, 0x01111111, 0x00000001}},
-        {{0x00000000, 0x00100100, 0x01100110, 0x00011000,
-          0x00011000, 0x01100110, 0x00100100, 0x00000000}},
+        {{0x00000000,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110}},
+
+        {{0x00000000,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111}},
+
+        {{0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x01111111,
+          0x00000000}},
+
+        {{0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x11111110,
+          0x00000000}},
+
     };
-    tile_mem[CBB_0][0]= tiles[0];
-    tile_mem[CBB_0][1]= tiles[1];
+    tile_mem[CBB_0][0] = tiles[0];
+    tile_mem[CBB_0][1] = tiles[1];
+    tile_mem[CBB_0][2] = tiles[2];
+    tile_mem[CBB_0][3] = tiles[3];
 
     // create a palette
-    pal_bg_bank[0][1]= RGB15(31,  0,  0);
-    pal_bg_bank[1][1]= RGB15( 0, 31,  0);
-    pal_bg_bank[2][1]= RGB15( 0,  0, 31);
-    pal_bg_bank[3][1]= RGB15(16, 16, 16);
+    pal_bg_bank[0][1] = RGB15(31,  0,  0);
+    pal_bg_bank[1][1] = RGB15( 0, 31,  0);
+    pal_bg_bank[2][1] = RGB15( 0,  0, 31);
+    pal_bg_bank[3][1] = RGB15(16, 16, 16);
 
     // FIXME Clean up
     SCR_ENTRY *pse= bg0_map;
@@ -340,7 +374,7 @@ void init_bg() {
     for(jj=0; jj<32*20; jj++) {
         ii = jj;// - (2*(jj/30));
         my_scr = my_map[ii/32][ii%32];
-        *pse++ = SE_PALBANK(my_scr);
+        *pse++ = SE_PALBANK(my_scr) | SE_ID((jj%2) + ((jj/16)%2));
         //vid_vsync();
     }
 }
@@ -447,7 +481,7 @@ int main() {
         oam_init(obj_buffer, 128);
         REG_DISPCNT= DCNT_MODE0 | DCNT_BG0 | DCNT_OBJ | DCNT_OBJ_1D;
 
-        //init_bg(); // FIXME create basic BG
+        init_bg(); // FIXME create basic BG
         sprite_loop();
 
         // Waiting for new commands
